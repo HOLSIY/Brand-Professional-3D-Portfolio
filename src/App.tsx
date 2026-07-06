@@ -71,21 +71,15 @@ export default function App() {
     return () => window.removeEventListener("hashchange", handleHashTrack);
   }, []);
 
-  // Monitor URL hash for navigation to secret admin gate
+  // Clean up any leftover hash on initial mount to keep address bar pristine
   useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash === "#mulu-private-dashboard-72x9") {
-        setIsAdminOpen(true);
-      } else {
-        setIsAdminOpen(false);
+    if (window.location.hash === "#mulu-private-dashboard-72x9") {
+      try {
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      } catch (e) {
+        window.location.hash = "";
       }
-    };
-
-    // Check initial hash on mount
-    handleHashChange();
-
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    }
   }, []);
 
   const handleNavClick = (sectionId: string) => {
@@ -176,7 +170,7 @@ export default function App() {
         <ProjectsSection />
 
         {/* Form, WhatsApp, and Links Contact Section */}
-        <ContactSection />
+        <ContactSection onAdminClick={() => setIsAdminOpen(true)} />
       </div>
     </div>
   );

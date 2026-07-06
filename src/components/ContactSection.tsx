@@ -20,7 +20,11 @@ export default function ContactSection({ onAdminClick }: { onAdminClick?: () => 
       const recent = prev.filter((time) => now - time <= 13000);
       const updated = [...recent, now];
       if (updated.length >= 12) {
-        window.location.hash = "#mulu-private-dashboard-72x9";
+        if (onAdminClick) {
+          onAdminClick();
+        } else {
+          window.location.hash = "#mulu-private-dashboard-72x9";
+        }
         return [];
       }
       return updated;

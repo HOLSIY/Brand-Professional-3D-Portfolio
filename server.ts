@@ -8,8 +8,17 @@ import { getFirestore, initializeFirestore, collection, addDoc, getDocs, deleteD
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Safely resolve directory path for both ES Modules and CommonJS (Vercel)
+let currentDirname = process.cwd();
+try {
+  if (typeof __dirname !== "undefined") {
+    currentDirname = __dirname;
+  } else if (typeof import.meta !== "undefined" && import.meta.url) {
+    currentDirname = path.dirname(fileURLToPath(import.meta.url));
+  }
+} catch (e) {
+  console.warn("[Server] Note: Could not dynamically resolve directory path, using process.cwd().");
+}
 
 const app = express();
 const PORT = 3000;
@@ -43,39 +52,56 @@ let memoryVisits: Visit[] = [];
 let memoryProjects: any[] = [];
 let memoryCertificates: any[] = [];
 
-// Initialize Firebase from generated config
+// Initialize Firebase from generated config or robust fallback
 let firebaseApp: any = null;
 let db: any = null;
 
 try {
+  let config: any = null;
   let configPath = path.join(process.cwd(), "firebase-applet-config.json");
   if (!fs.existsSync(configPath)) {
-    // Try relative to current file (works when bundled or run from subfolders)
-    configPath = path.join(__dirname, "../firebase-applet-config.json");
+    configPath = path.join(currentDirname, "../firebase-applet-config.json");
   }
   if (!fs.existsSync(configPath)) {
-    // Try in current directory
-    configPath = path.join(__dirname, "firebase-applet-config.json");
+    configPath = path.join(currentDirname, "firebase-applet-config.json");
   }
 
   if (fs.existsSync(configPath)) {
-    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    firebaseApp = initializeApp({
-      apiKey: config.apiKey,
-      authDomain: config.authDomain,
-      projectId: config.projectId,
-      storageBucket: config.storageBucket,
-      messagingSenderId: config.messagingSenderId,
-      appId: config.appId
-    });
-    const dbId = config.firestoreDatabaseId || "(default)";
-    db = initializeFirestore(firebaseApp, {
-      experimentalForceLongPolling: true,
-    }, dbId);
-    console.log(`[Firebase] Initialized Firestore database with force long-polling: ${dbId}`);
-  } else {
-    console.warn("[Firebase] Warning: firebase-applet-config.json not found. Using in-memory fallback.");
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+      console.log("[Firebase] Successfully loaded config from firebase-applet-config.json");
+    } catch (e) {
+      console.error("[Firebase] Failed to parse firebase-applet-config.json, using fallback:", e);
+    }
   }
+
+  if (!config) {
+    console.log("[Firebase] Using robust hardcoded config fallback.");
+    config = {
+      projectId: "gen-lang-client-0530460158",
+      appId: "1:1043359078319:web:8f370c7eb0f48b5941015a",
+      apiKey: "AIzaSyDreLAOwJKzYJU7SpOuHk3vxewactUA1c8",
+      authDomain: "gen-lang-client-0530460158.firebaseapp.com",
+      storageBucket: "gen-lang-client-0530460158.appspot.com",
+      messagingSenderId: "1043359078319",
+      firestoreDatabaseId: "ai-studio-senaf3dcreatorpo-f9232c8b-2112-482f-b772-a4552500dfe9"
+    };
+  }
+
+  firebaseApp = initializeApp({
+    apiKey: config.apiKey,
+    authDomain: config.authDomain,
+    projectId: config.projectId,
+    storageBucket: config.storageBucket,
+    messagingSenderId: config.messagingSenderId,
+    appId: config.appId
+  });
+  
+  const dbId = config.firestoreDatabaseId || "(default)";
+  db = initializeFirestore(firebaseApp, {
+    experimentalForceLongPolling: true,
+  }, dbId);
+  console.log(`[Firebase] Initialized Firestore database: ${dbId}`);
 } catch (error) {
   console.error("[Firebase] Error initializing Firebase. Falling back to in-memory:", error);
 }
@@ -168,8 +194,8 @@ async function isPasswordConfigured(): Promise<boolean> {
       handleFirestoreError(err, OperationType.GET, "settings/admin_config");
     }
   }
-  // Default to true because of the "admin123" fallback password
-  return true;
+  // If no password is configured in either process.env or Firestore, return false to allow setup
+  return false;
 }
 
 // -----------------------------------------------------------------------------

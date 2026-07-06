@@ -70,7 +70,8 @@ html, body, #root {
 }
 
 /* General text color fallback */
-.light .text-\[\#D7E2EA\] {
+.light .text-\[\#D7E2EA\],
+.light [class*="text-[#D7E2EA]"]:not([class*="/"]) {
   color: #1E293B !important; /* slate-800 */
 }
 
@@ -222,23 +223,29 @@ html, body, #root {
 .light #contact p, .light #contact span {
   color: #334155 !important;
 }
-.light #contact .text-\[\#D7E2EA\]\/40 {
+.light #contact .text-\[\#D7E2EA\]\/40,
+.light #contact [class*="text-[#D7E2EA]/40"] {
   color: #64748B !important;
 }
-.light #contact .text-\[\#D7E2EA\]\/70 {
+.light #contact .text-\[\#D7E2EA\]\/70,
+.light #contact [class*="text-[#D7E2EA]/70"] {
   color: #334155 !important;
 }
 
 /* Glass Form Card */
-.light #contact .bg-white\/\[0\.02\] {
+.light #contact .bg-white\/\[0\.02\],
+.light #contact [class*="bg-white/[0.02]"] {
   background-color: #FFFFFF !important;
   border: 1px solid rgba(15, 23, 42, 0.08) !important;
   box-shadow: 0 35px 80px rgba(15, 23, 42, 0.05) !important;
 }
-.light #contact .bg-white\/\[0\.02\] .text-white {
+.light #contact .bg-white\/\[0\.02\] .text-white,
+.light #contact [class*="bg-white/[0.02]"] .text-white,
+.light #contact [class*="bg-white/[0.02]"] h3 {
   color: #0F172A !important;
 }
-.light #contact .text-\[\#D7E2EA\]\/50 {
+.light #contact .text-\[\#D7E2EA\]\/50,
+.light #contact [class*="text-[#D7E2EA]/50"] {
   color: #64748B !important;
 }
 
@@ -255,7 +262,8 @@ html, body, #root {
   border-color: #B600A8 !important;
   background-color: #FFFFFF !important;
 }
-.light #contact .text-white\/30 {
+.light #contact .text-white\/30,
+.light #contact [class*="text-white/30"] {
   color: #64748B !important;
 }
 .light #contact button[type="submit"] {
@@ -263,23 +271,27 @@ html, body, #root {
 }
 
 /* WhatsApp and direct links in Light mode */
-.light #contact .bg-\[\#25D366\]\/10 {
+.light #contact .bg-\[\#25D366\]\/10,
+.light #contact [class*="bg-[#25D366]/10"] {
   background-color: rgba(37, 211, 102, 0.08) !important;
 }
-.light #contact .bg-white\/5 {
+.light #contact .bg-white\/5,
+.light #contact [class*="bg-white/5"] {
   background-color: #FFFFFF !important;
   border-color: rgba(15, 23, 42, 0.1) !important;
   color: #0F172A !important;
 }
-.light #contact .bg-white\/5 .text-white {
+.light #contact .bg-white\/5 .text-white,
+.light #contact [class*="bg-white/5"] .text-white,
+.light #contact [class*="bg-white/5"] svg {
   color: #0F172A !important;
 }
-.light #contact .bg-white\/5 .text-\[\#D7E2EA\]\/70 {
+.light #contact .bg-white\/5 .text-\[\#D7E2EA\]\/70,
+.light #contact [class*="bg-white/5"] [class*="text-[#D7E2EA]/70"] {
   color: #475569 !important;
 }
-
-/* Footer & Dividers */
-.light #contact .border-white\/5 {
+.light #contact .border-white\/5,
+.light #contact [class*="border-white/5"] {
   border-color: rgba(15, 23, 42, 0.08) !important;
 }
 
@@ -306,7 +318,8 @@ html, body, #root {
 }
 
 /* Marquee containers override for Light Mode */
-.light .bg-\[\#1A1A1A\] {
+.light .bg-\[\#1A1A1A\],
+.light [class*="bg-[#1A1A1A]"] {
   background-color: rgba(255, 255, 255, 0.8) !important;
   border-color: rgba(15, 23, 42, 0.08) !important;
 }
@@ -320,22 +333,28 @@ html, body, #root {
 }
 
 /* Catch-all text opacity fixes for tailwind light-mode rendering */
-.light .text-\[\#D7E2EA\]\/70 {
+.light .text-\[\#D7E2EA\]\/70,
+.light [class*="text-[#D7E2EA]/70"] {
   color: rgba(30, 41, 59, 0.8) !important;
 }
-.light .text-\[\#D7E2EA\]\/60 {
+.light .text-\[\#D7E2EA\]\/60,
+.light [class*="text-[#D7E2EA]/60"] {
   color: rgba(30, 41, 59, 0.7) !important;
 }
-.light .text-\[\#D7E2EA\]\/50 {
+.light .text-\[\#D7E2EA\]\/50,
+.light [class*="text-[#D7E2EA]/50"] {
   color: rgba(30, 41, 59, 0.6) !important;
 }
-.light .text-\[\#D7E2EA\]\/40 {
+.light .text-\[\#D7E2EA\]\/40,
+.light [class*="text-[#D7E2EA]/40"] {
   color: rgba(30, 41, 59, 0.5) !important;
 }
-.light .text-\[\#D7E2EA\]\/30 {
+.light .text-\[\#D7E2EA\]\/30,
+.light [class*="text-[#D7E2EA]/30"] {
   color: rgba(30, 41, 59, 0.4) !important;
 }
-.light .text-\[\#D7E2EA\]\/15 {
+.light .text-\[\#D7E2EA\]\/15,
+.light [class*="text-[#D7E2EA]/15"] {
   color: rgba(30, 41, 59, 0.2) !important;
 }
 
