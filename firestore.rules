@@ -28,9 +28,9 @@ service cloud.firestore {
         && data.visitorId is string && data.visitorId.size() > 0 && data.visitorId.size() <= 200
         && data.path is string && data.path.size() > 0 && data.path.size() <= 1000
         && data.timestamp is string && data.timestamp.size() > 0 && data.timestamp.size() <= 100
-        && (!data.keys().hasAny(['userAgent']) || (data.userAgent is string && data.userAgent.size() <= 1000))
+        && (!data.keys().hasAny(['userAgent']) || (data.userAgent is string && data.userAgent.size() <= 2000))
         && (!data.keys().hasAny(['language']) || (data.language is string && data.language.size() <= 100))
-        && (!data.keys().hasAny(['referrer']) || (data.referrer is string && data.referrer.size() <= 1000));
+        && (!data.keys().hasAny(['referrer']) || (data.referrer is string && data.referrer.size() <= 2000));
     }
 
     // Helper: Validates admin configuration/settings schema and parameters

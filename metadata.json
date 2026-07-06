@@ -1,0 +1,6 @@
+{
+  "name": "Senaf - 3D Creator Portfolio",
+  "description": "Modern high-end professional 3D Creator portfolio for Senaf, built with React, Framer Motion, and Tailwind CSS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
