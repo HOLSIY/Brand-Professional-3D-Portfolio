@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, getDoc, setDoc } from "firebase/firestore";
+import { getFirestore, initializeFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, getDoc, setDoc } from "firebase/firestore";
 
 dotenv.config();
 
@@ -44,7 +44,16 @@ let firebaseApp: any = null;
 let db: any = null;
 
 try {
-  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  let configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  if (!fs.existsSync(configPath)) {
+    // Try relative to current file (works when bundled or run from subfolders)
+    configPath = path.join(__dirname, "../firebase-applet-config.json");
+  }
+  if (!fs.existsSync(configPath)) {
+    // Try in current directory
+    configPath = path.join(__dirname, "firebase-applet-config.json");
+  }
+
   if (fs.existsSync(configPath)) {
     const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     firebaseApp = initializeApp({
@@ -56,8 +65,10 @@ try {
       appId: config.appId
     });
     const dbId = config.firestoreDatabaseId || "(default)";
-    db = getFirestore(firebaseApp, dbId);
-    console.log(`[Firebase] Initialized Firestore database: ${dbId}`);
+    db = initializeFirestore(firebaseApp, {
+      experimentalForceLongPolling: true,
+    }, dbId);
+    console.log(`[Firebase] Initialized Firestore database with force long-polling: ${dbId}`);
   } else {
     console.warn("[Firebase] Warning: firebase-applet-config.json not found. Using in-memory fallback.");
   }
