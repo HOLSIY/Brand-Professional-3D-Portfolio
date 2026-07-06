@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+@variant light (&:where(.light, .light *));
+
 @theme {
   --font-sans: "Kanit", sans-serif;
   --font-display: "Kanit", sans-serif;
@@ -267,7 +270,13 @@ html, body, #root {
   color: #64748B !important;
 }
 .light #contact button[type="submit"] {
-  outline: 2px solid #0F172A !important;
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  outline: none !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2) !important;
+}
+.light #contact button[type="submit"]:hover {
+  background-color: #1E293B !important;
 }
 
 /* WhatsApp and direct links in Light mode */
@@ -275,15 +284,18 @@ html, body, #root {
 .light #contact [class*="bg-[#25D366]/10"] {
   background-color: rgba(37, 211, 102, 0.08) !important;
 }
-.light #contact .bg-white\/5,
-.light #contact [class*="bg-white/5"] {
+.light #contact [class*="bg-[#25D366]"] span {
+  color: #25D366 !important;
+}
+.light #contact .bg-white\/5:not(.text-\[\#FF007F\]):not(.text-\[\#1877F2\]),
+.light #contact [class*="bg-white/5"]:not([class*="text-[#FF007F]"]):not([class*="text-[#1877F2]"]) {
   background-color: #FFFFFF !important;
   border-color: rgba(15, 23, 42, 0.1) !important;
   color: #0F172A !important;
 }
-.light #contact .bg-white\/5 .text-white,
-.light #contact [class*="bg-white/5"] .text-white,
-.light #contact [class*="bg-white/5"] svg {
+.light #contact .bg-white\/5:not(.text-\[\#FF007F\]):not(.text-\[\#1877F2\]) .text-white,
+.light #contact [class*="bg-white/5"]:not([class*="text-[#FF007F]"]):not([class*="text-[#1877F2]"]) .text-white,
+.light #contact [class*="bg-white/5"]:not([class*="text-[#FF007F]"]):not([class*="text-[#1877F2]"]) svg {
   color: #0F172A !important;
 }
 .light #contact .bg-white\/5 .text-\[\#D7E2EA\]\/70,
@@ -293,6 +305,25 @@ html, body, #root {
 .light #contact .border-white\/5,
 .light #contact [class*="border-white/5"] {
   border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Instagram and Facebook specific overrides in Light Mode */
+.light #contact [class*="bg-white/5"][class*="text-[#FF007F]"] {
+  background-color: #FFFFFF !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  color: #FF007F !important;
+}
+.light #contact [class*="bg-white/5"][class*="text-[#FF007F]"] svg {
+  color: #FF007F !important;
+}
+
+.light #contact [class*="bg-white/5"][class*="text-[#1877F2]"] {
+  background-color: #FFFFFF !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  color: #1877F2 !important;
+}
+.light #contact [class*="bg-white/5"][class*="text-[#1877F2]"] svg {
+  color: #1877F2 !important;
 }
 
 /* Scrollbars in Light theme */
