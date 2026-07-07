@@ -748,19 +748,9 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
 
                 <form onSubmit={handleLoginSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs uppercase tracking-wider text-[#D7E2EA]/70 font-medium">
-                        Security Password
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setShowForgotPwd(true)}
-                        className="text-xs text-[#B600A8] hover:text-[#B600A8]/80 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <HelpCircle className="w-3.5 h-3.5" />
-                        <span>Forgot Password?</span>
-                      </button>
-                    </div>
+                    <label className="text-xs uppercase tracking-wider text-[#D7E2EA]/70 font-medium block">
+                      Security Password
+                    </label>
                     <input
                       type="password"
                       placeholder="••••••••••••"
