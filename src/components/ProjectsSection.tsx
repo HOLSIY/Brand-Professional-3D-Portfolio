@@ -4,17 +4,17 @@ import FadeIn from "./FadeIn";
 import LiveProjectButton from "./LiveProjectButton";
 
 // Import project images
-import p1_col1_1 from "../assets/images/regenerated_image_1783167869447.jpg";
-import p1_col1_2 from "../assets/images/regenerated_image_1783167890479.jpg";
-import p1_col2 from "../assets/images/regenerated_image_1783167880960.jpg";
+import p1_col1_1 from "../assets/images/regenerated_image_1783167869447.webp";
+import p1_col1_2 from "../assets/images/regenerated_image_1783167890479.webp";
+import p1_col2 from "../assets/images/regenerated_image_1783167880960.webp";
 
-import p2_col1_1 from "../assets/images/regenerated_image_1783167896522.jpg";
-import p2_col1_2 from "../assets/images/regenerated_image_1783167919972.jpg";
-import p2_col2 from "../assets/images/regenerated_image_1783167902052.jpg";
+import p2_col1_1 from "../assets/images/regenerated_image_1783167896522.webp";
+import p2_col1_2 from "../assets/images/regenerated_image_1783167919972.webp";
+import p2_col2 from "../assets/images/regenerated_image_1783167902052.webp";
 
-import p3_col1_1 from "../assets/images/solaris_ui_3d_1783190461716.jpg";
-import p3_col1_2 from "../assets/images/solaris_mobile_ui_1783190475866.jpg";
-import p3_col2 from "../assets/images/solaris_3d_space_1783190492326.jpg";
+import p3_col1_1 from "../assets/images/solaris_ui_3d_1783190461716.webp";
+import p3_col1_2 from "../assets/images/solaris_mobile_ui_1783190475866.webp";
+import p3_col2 from "../assets/images/solaris_3d_space_1783190492326.webp";
 
 export interface ProjectData {
   id?: string;
@@ -53,8 +53,8 @@ export const DEFAULT_PROJECTS: ProjectData[] = [
   },
 ];
 
-/* Helper Component: Renders an image with high-priority eager pre-loading
-   to ensure they are fully loaded before entering the viewport, with zero black loading states */
+/* Helper Component: Renders an image with high-performance lazy loading,
+   preventing flashing and showing a beautiful blurred preview followed by a premium smooth entry */
 function ImageWithLoader({
   src,
   alt,
@@ -70,17 +70,28 @@ function ImageWithLoader({
   transition?: any;
   [key: string]: any;
 }) {
+  const [isLoaded, setIsLoaded] = useState(false);
   const hasObjectFit = className.includes("object-contain") || className.includes("object-cover");
-  const defaultClasses = `w-full h-full filter brightness-95 opacity-100 transition-all duration-300 ${hasObjectFit ? "" : "object-cover"}`;
+  const defaultClasses = `w-full h-full filter brightness-95 transition-all duration-700 ${
+    isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+  } ${hasObjectFit ? "" : "object-cover"}`;
 
   return (
     <div className="relative w-full h-full bg-[#111113] overflow-hidden select-none flex items-center justify-center">
+      {/* Blurred preview skeleton using the same source file for instant loading without a separate file request */}
+      <div 
+        className={`absolute inset-0 bg-cover bg-center filter blur-xl opacity-20 transition-opacity duration-500 pointer-events-none ${
+          isLoaded ? "opacity-0" : "opacity-20"
+        }`}
+        style={{ backgroundImage: `url(${src})` }}
+      />
       {whileHover ? (
         <motion.img
           src={src}
           alt={alt}
-          loading="eager"
-          whileHover={whileHover}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+          whileHover={isLoaded ? whileHover : undefined}
           transition={transition}
           className={`${defaultClasses} ${className}`}
           {...props}
@@ -89,7 +100,8 @@ function ImageWithLoader({
         <img
           src={src}
           alt={alt}
-          loading="eager"
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
           className={`${defaultClasses} ${className}`}
           {...props}
         />
@@ -98,7 +110,7 @@ function ImageWithLoader({
   );
 }
 
-export default function ProjectsSection() {
+const ProjectsSection = React.memo(function ProjectsSection() {
   const [projects, setProjects] = useState<ProjectData[]>(DEFAULT_PROJECTS);
 
   useEffect(() => {
@@ -116,17 +128,6 @@ export default function ProjectsSection() {
       .catch((err) => {
         console.warn("Using default static projects fallback:", err);
       });
-
-    // Programmatically preload all default project images with high priority
-    const imagesToPreload = [
-      p1_col1_1, p1_col1_2, p1_col2,
-      p2_col1_1, p2_col1_2, p2_col2,
-      p3_col1_1, p3_col1_2, p3_col2
-    ];
-    imagesToPreload.forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
   }, []);
 
   return (
@@ -156,7 +157,7 @@ export default function ProjectsSection() {
       </div>
     </section>
   );
-}
+});
 
 interface ProjectCardProps {
   project: ProjectData;
@@ -699,3 +700,5 @@ function ProjectCard({ project, index }: ProjectCardProps) {
     </motion.div>
   );
 }
+
+export default ProjectsSection;

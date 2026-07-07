@@ -32,7 +32,7 @@ const ROW2_IMAGES = IMAGES.slice(11);
 const ROW1_TRIPLED = [...ROW1_IMAGES, ...ROW1_IMAGES, ...ROW1_IMAGES];
 const ROW2_TRIPLED = [...ROW2_IMAGES, ...ROW2_IMAGES, ...ROW2_IMAGES];
 
-export default function MarqueeSection() {
+const MarqueeSection = React.memo(function MarqueeSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
 
   // Initialize a high-performance motion value for tracking normalized X cursor position
@@ -139,4 +139,6 @@ export default function MarqueeSection() {
       </div>
     </section>
   );
-}
+});
+
+export default MarqueeSection;

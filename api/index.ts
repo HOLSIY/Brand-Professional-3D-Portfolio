@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
+import compression from "compression";
 import { fileURLToPath } from "url";
 import { initializeApp } from "firebase/app";
 import { getFirestore, initializeFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, getDoc, setDoc } from "firebase/firestore";
@@ -22,6 +23,7 @@ try {
 
 const app = express();
 
+app.use(compression());
 app.use(express.json());
 
 // In-memory fallback in case Firebase config is not fully available/loaded
