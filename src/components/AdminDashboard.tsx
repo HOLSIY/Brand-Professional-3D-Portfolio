@@ -748,9 +748,19 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
 
                 <form onSubmit={handleLoginSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-wider text-[#D7E2EA]/70 font-medium block">
-                      Security Password
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs uppercase tracking-wider text-[#D7E2EA]/70 font-medium">
+                        Security Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPwd(true)}
+                        className="text-xs text-[#B600A8] hover:text-[#B600A8]/80 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        <span>Forgot Password?</span>
+                      </button>
+                    </div>
                     <input
                       type="password"
                       placeholder="••••••••••••"
@@ -1493,17 +1503,11 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                 <HelpCircle className="w-6 h-6 animate-pulse" />
               </div>
 
-              <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white">Password Security Info</h3>
+              <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white">Password Recovery</h3>
               
-              <div className="text-sm text-[#D7E2EA]/70 font-light mt-4 space-y-4 leading-relaxed">
+              <div className="text-sm text-[#D7E2EA]/70 font-light mt-4 leading-relaxed">
                 <p>
-                  1. <strong className="text-white">Secure Configuration:</strong> In order to carry total privacy, there is no default password hardcoded in the website.
-                </p>
-                <p>
-                  2. <strong className="text-white">Setting an Override:</strong> You can set an environment variable <code className="bg-white/5 px-1.5 py-0.5 rounded text-blue-400 font-mono">ADMIN_PASSWORD</code> in the build panel to force a specific master passcode.
-                </p>
-                <p>
-                  3. <strong className="text-white">Database Storage:</strong> When set or changed in the setup/settings view, your password is saved directly to Firestore under the collection path <code className="bg-white/5 px-1.5 py-0.5 rounded text-[#B600A8] font-mono">/settings/admin_config</code>. You can easily view, modify, or delete it directly from your GCP Firebase database console.
+                  If you have forgotten your administrator password, please contact the system administrator or use the internal password management options if available.
                 </p>
               </div>
 
