@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Sun, Moon } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
 import HeroSection from "./components/HeroSection";
 import MarqueeSection from "./components/MarqueeSection";
 import AboutSection from "./components/AboutSection";
@@ -202,6 +203,9 @@ export default function App() {
         {/* Form, WhatsApp, and Links Contact Section */}
         <ContactSection onAdminClick={() => setIsAdminOpen(true)} />
       </div>
+      
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </div>
   );
 }
