@@ -11,16 +11,10 @@ import AboutSection from "./components/AboutSection";
 import ServicesSection from "./components/ServicesSection";
 import ProjectsSection from "./components/ProjectsSection";
 import ContactSection from "./components/ContactSection";
-import videoPoster from "./assets/images/video_poster_1783428837587.webp";
-import bgVideoWebm from "./assets/videos/bg_video.webm";
-import bgVideoMp4 from "./assets/videos/bg_video.mp4";
-
-// Dynamic import for the heavy admin dashboard to split it from the initial bundle
-const AdminDashboard = React.lazy(() => import("./components/AdminDashboard"));
+import AdminDashboard from "./components/AdminDashboard";
 
 export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     const saved = localStorage.getItem("portfolio_theme");
     return saved === "light" ? "light" : "dark";
@@ -109,21 +103,12 @@ export default function App() {
 
   if (isAdminOpen) {
     return (
-      <React.Suspense fallback={
-        <div className="fixed inset-0 min-h-screen w-full bg-[#0C0C0C] flex flex-col items-center justify-center text-white z-50">
-          <div className="w-10 h-10 border-4 border-[#B600A8]/30 border-t-[#B600A8] rounded-full animate-spin mb-4" />
-          <span className="font-mono text-xs uppercase tracking-widest text-[#D7E2EA]/50 animate-pulse">
-            Decrypting Dashboard...
-          </span>
-        </div>
-      }>
-        <AdminDashboard
-          onClose={() => {
-            setIsAdminOpen(false);
-            window.location.hash = "";
-          }}
-        />
-      </React.Suspense>
+      <AdminDashboard
+        onClose={() => {
+          setIsAdminOpen(false);
+          window.location.hash = "";
+        }}
+      />
     );
   }
 
@@ -148,30 +133,15 @@ export default function App() {
       </div>
 
       {/* Full-Page Premium Fixed 3D Motion Background Video */}
-      <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#0C0C0C]">
-        {/* Poster image that displays instantly, fading out when the video is active */}
-        <div 
-          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
-            isVideoPlaying ? "opacity-0" : "opacity-100"
-          }`}
-          style={{ backgroundImage: `url(${videoPoster})` }}
-        />
+      <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <video
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_105406_16f4600d-7a92-4292-b96e-b19156c7830a.mp4"
           autoPlay
           loop
           muted
           playsInline
-          preload="auto"
-          onPlay={() => setIsVideoPlaying(true)}
-          onPlaying={() => setIsVideoPlaying(true)}
-          onLoadedData={() => setIsVideoPlaying(true)}
-          className={`w-full h-full object-cover transition-opacity duration-1000 ${
-            isVideoPlaying ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <source src={bgVideoWebm} type="video/webm" />
-          <source src={bgVideoMp4} type="video/mp4" />
-        </video>
+          className="w-full h-full object-cover"
+        />
         {/* Soft dynamic overlay: in Light mode, acts like beautiful translucent white glass; in Dark mode, keeps standard depth */}
         <div className={`absolute inset-0 transition-all duration-700 ${
           theme === "light" 

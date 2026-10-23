@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import FadeIn from "./FadeIn";
 import { Send, Github, Linkedin, MessageSquare, Mail, User, MessageCircle, AlertCircle, CheckCircle2, Instagram, Facebook } from "lucide-react";
 
-const ContactSection = React.memo(function ContactSection({ onAdminClick }: { onAdminClick?: () => void }) {
+export default function ContactSection({ onAdminClick }: { onAdminClick?: () => void }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -15,25 +15,20 @@ const ContactSection = React.memo(function ContactSection({ onAdminClick }: { on
 
   const handleSecretClick = () => {
     const now = Date.now();
-    let triggerAdmin = false;
     setSecretClickTimestamps((prev) => {
       // Keep only clicks within the last 13 seconds (13000 milliseconds)
       const recent = prev.filter((time) => now - time <= 13000);
       const updated = [...recent, now];
       if (updated.length >= 12) {
-        triggerAdmin = true;
+        if (onAdminClick) {
+          onAdminClick();
+        } else {
+          window.location.hash = "#mulu-private-dashboard-72x9";
+        }
         return [];
       }
       return updated;
     });
-
-    if (triggerAdmin) {
-      if (onAdminClick) {
-        onAdminClick();
-      } else {
-        window.location.hash = "#mulu-private-dashboard-72x9";
-      }
-    }
   };
 
   const getFirstName = () => {
@@ -319,6 +314,4 @@ const ContactSection = React.memo(function ContactSection({ onAdminClick }: { on
       </div>
     </section>
   );
-});
-
-export default ContactSection;
+}

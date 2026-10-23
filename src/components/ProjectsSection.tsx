@@ -1,20 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { Sliders } from "lucide-react";
 import FadeIn from "./FadeIn";
 import LiveProjectButton from "./LiveProjectButton";
+import { useAdminAuth } from "../utils/useAdminAuth";
 
-// Import project images
-import p1_col1_1 from "../assets/images/regenerated_image_1783167869447.webp";
-import p1_col1_2 from "../assets/images/regenerated_image_1783167890479.webp";
-import p1_col2 from "../assets/images/regenerated_image_1783167880960.webp";
+// Import project images (clean original assets)
+import p1_col1_1 from "../assets/images/regenerated_image_1783167869447.jpg";
+import p1_col1_2 from "../assets/images/regenerated_image_1783167890479.jpg";
+import p1_col2 from "../assets/images/regenerated_image_1783167880960.jpg";
 
-import p2_col1_1 from "../assets/images/regenerated_image_1783167896522.webp";
-import p2_col1_2 from "../assets/images/regenerated_image_1783167919972.webp";
-import p2_col2 from "../assets/images/regenerated_image_1783167902052.webp";
+import p2_col1_1 from "../assets/images/regenerated_image_1783167896522.jpg";
+import p2_col1_2 from "../assets/images/regenerated_image_1783167919972.jpg";
+import p2_col2 from "../assets/images/regenerated_image_1783167902052.jpg";
 
-import p3_col1_1 from "../assets/images/solaris_ui_3d_1783190461716.webp";
-import p3_col1_2 from "../assets/images/solaris_mobile_ui_1783190475866.webp";
-import p3_col2 from "../assets/images/solaris_3d_space_1783190492326.webp";
+import p3_col1_1 from "../assets/images/solaris_ui_3d_1783190461716.jpg";
+import p3_col1_2 from "../assets/images/solaris_mobile_ui_1783190475866.jpg";
+import p3_col2 from "../assets/images/solaris_3d_space_1783190492326.jpg";
+
+// Global cache tracking URLs that have loaded in this session to prevent re-downloads or flicker
+import { loadedImageUrls } from "./LazyImage";
 
 export interface ProjectData {
   id?: string;
@@ -53,8 +58,7 @@ export const DEFAULT_PROJECTS: ProjectData[] = [
   },
 ];
 
-/* Helper Component: Renders an image with high-performance lazy loading,
-   preventing flashing and showing a beautiful blurred preview followed by a premium smooth entry */
+/* Helper Component: Renders an image using viewport lazy loading and browser caching */
 function ImageWithLoader({
   src,
   alt,
@@ -70,47 +74,103 @@ function ImageWithLoader({
   transition?: any;
   [key: string]: any;
 }) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const isAlreadyLoaded = loadedImageUrls.has(src);
+  const [inView, setInView] = useState(isAlreadyLoaded);
+  const [isLoaded, setIsLoaded] = useState(isAlreadyLoaded);
+
+  useEffect(() => {
+    if (isAlreadyLoaded) {
+      setInView(true);
+      setIsLoaded(true);
+      return;
+    }
+    if (!containerRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setInView(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "350px 100px", threshold: 0.01 }
+    );
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [src, isAlreadyLoaded]);
+
+  // Handle cached images where complete is true before or upon mount
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      loadedImageUrls.add(src);
+      setIsLoaded(true);
+    }
+  }, [inView, src]);
+
   const hasObjectFit = className.includes("object-contain") || className.includes("object-cover");
-  const defaultClasses = `w-full h-full filter brightness-95 transition-all duration-700 ${
-    isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
-  } ${hasObjectFit ? "" : "object-cover"}`;
+  const defaultClasses = `w-full h-full filter brightness-95 transition-all duration-300 ${hasObjectFit ? "" : "object-cover"}`;
 
   return (
-    <div className="relative w-full h-full bg-[#111113] overflow-hidden select-none flex items-center justify-center">
-      {/* Blurred preview skeleton using the same source file for instant loading without a separate file request */}
-      <div 
-        className={`absolute inset-0 bg-cover bg-center filter blur-xl opacity-20 transition-opacity duration-500 pointer-events-none ${
-          isLoaded ? "opacity-0" : "opacity-20"
-        }`}
-        style={{ backgroundImage: `url(${src})` }}
-      />
-      {whileHover ? (
-        <motion.img
-          src={src}
-          alt={alt}
-          loading="lazy"
-          onLoad={() => setIsLoaded(true)}
-          whileHover={isLoaded ? whileHover : undefined}
-          transition={transition}
-          className={`${defaultClasses} ${className}`}
-          {...props}
-        />
-      ) : (
-        <img
-          src={src}
-          alt={alt}
-          loading="lazy"
-          onLoad={() => setIsLoaded(true)}
-          className={`${defaultClasses} ${className}`}
-          {...props}
-        />
+    <div
+      ref={containerRef}
+      className="relative w-full h-full bg-[#111113] overflow-hidden select-none flex items-center justify-center"
+    >
+      {inView && (
+        whileHover ? (
+          <motion.img
+            ref={imgRef}
+            src={src}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            onLoad={() => {
+              loadedImageUrls.add(src);
+              setIsLoaded(true);
+            }}
+            onError={() => {
+              setIsLoaded(true);
+            }}
+            whileHover={whileHover}
+            transition={transition}
+            className={`${defaultClasses} ${className} transition-opacity duration-300 ${
+              isLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            {...props}
+          />
+        ) : (
+          <img
+            ref={imgRef}
+            src={src}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            onLoad={() => {
+              loadedImageUrls.add(src);
+              setIsLoaded(true);
+            }}
+            onError={() => {
+              setIsLoaded(true);
+            }}
+            className={`${defaultClasses} ${className} transition-opacity duration-300 ${
+              isLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            {...props}
+          />
+        )
       )}
+      <div
+        className={`absolute inset-0 bg-[#111113] pointer-events-none transition-opacity duration-300 ${
+          isLoaded ? "opacity-0" : "opacity-100"
+        }`}
+      />
     </div>
   );
 }
 
-const ProjectsSection = React.memo(function ProjectsSection() {
+export default function ProjectsSection() {
   const [projects, setProjects] = useState<ProjectData[]>(DEFAULT_PROJECTS);
 
   useEffect(() => {
@@ -128,6 +188,20 @@ const ProjectsSection = React.memo(function ProjectsSection() {
       .catch((err) => {
         console.warn("Using default static projects fallback:", err);
       });
+
+    // Load saved project layouts from backend API
+    fetch("/api/projects/layout")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.layouts) {
+          Object.entries(data.layouts).forEach(([pNum, pLayout]) => {
+            try {
+              localStorage.setItem(`project_layouts_v2_${pNum}`, JSON.stringify(pLayout));
+            } catch (e) {}
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -157,7 +231,7 @@ const ProjectsSection = React.memo(function ProjectsSection() {
       </div>
     </section>
   );
-});
+}
 
 interface ProjectCardProps {
   project: ProjectData;
@@ -175,10 +249,9 @@ interface ProjectImageProps {
   containerClass?: string;
 }
 
-// Inline styles for high-fidelity Safari/WebKit rounded-corner clipping
+// Inline styles for high-fidelity rounded-corner clipping without destructive masks
 const safariClipStyle: React.CSSProperties = {
-  WebkitMaskImage: "-webkit-radial-gradient(white, black)",
-  maskImage: "radial-gradient(white, black)",
+  overflow: "hidden",
   isolation: "isolate",
 };
 
@@ -198,6 +271,7 @@ interface EditableImageContainerProps {
     img2: { x: number; y: number; scale: number };
     img3: { x: number; y: number; scale: number };
   }>>;
+  priority?: boolean;
   parallaxOffset?: any;
   className?: string;
   containerClass?: string;
@@ -211,17 +285,52 @@ function EditableImageContainer({
   isEditing,
   layouts,
   setLayouts,
+  priority = false,
   parallaxOffset,
   className = "",
   containerClass = "",
 }: EditableImageContainerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const isAlreadyLoaded = loadedImageUrls.has(src);
+  const [inView, setInView] = useState(priority || isAlreadyLoaded);
+  const [isLoaded, setIsLoaded] = useState(isAlreadyLoaded);
+
+  useEffect(() => {
+    if (priority || isAlreadyLoaded) {
+      setInView(true);
+      return;
+    }
+    if (!containerRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setInView(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "350px 0px", threshold: 0.01 }
+    );
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [src, isAlreadyLoaded, priority]);
+
+  // Handle cached images where complete is true upon mount
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      loadedImageUrls.add(src);
+      setIsLoaded(true);
+    }
+  }, [inView, src]);
+
   const layout = layouts[imgKey] || { x: 0, y: 0, scale: 1 };
-  const finalContainerClass = isSolaris ? "w-full h-full" : containerClass;
 
   const clipStyle: React.CSSProperties = {
-    ...safariClipStyle,
     overflow: "hidden",
     borderRadius: "inherit",
+    isolation: "isolate",
     transform: "translate3d(0, 0, 0)",
     WebkitTransform: "translate3d(0, 0, 0)",
   };
@@ -237,29 +346,33 @@ function EditableImageContainer({
   };
 
   const renderInner = () => {
-    if (isSolaris) {
-      const imageStyle = {
-        transform: `translate(${layout.x}px, ${layout.y}px) scale(${layout.scale})`,
-        WebkitTransform: `translate(${layout.x}px, ${layout.y}px) scale(${layout.scale})`,
-        borderRadius: "inherit",
-      };
+    const imageStyle = {
+      transform: `translate(${layout.x}px, ${layout.y}px) scale(${layout.scale})`,
+      WebkitTransform: `translate(${layout.x}px, ${layout.y}px) scale(${layout.scale})`,
+      borderRadius: "inherit",
+    };
 
-      return (
-        <div className="w-full h-full relative rounded-[inherit]" style={clipStyle}>
-          {/* Blurred Ambient Background to fit borders perfectly */}
-          <img
-            src={src}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none select-none z-0 rounded-[inherit]"
-            style={{ transform: "translate3d(0, 0, 0)", WebkitTransform: "translate3d(0, 0, 0)" }}
-            referrerPolicy="no-referrer"
-          />
-          {/* High-Fidelity Main Image */}
+    return (
+      <div ref={containerRef} className="w-full h-full relative rounded-[inherit]" style={clipStyle}>
+        {inView && (
           <motion.img
+            ref={imgRef}
             src={src}
             alt={alt}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={priority ? "high" : "low"}
+            onLoad={() => {
+              loadedImageUrls.add(src);
+              setIsLoaded(true);
+            }}
+            onError={() => {
+              setIsLoaded(true);
+            }}
             style={imageStyle}
-            className={`${className} absolute inset-0 w-full h-full object-cover origin-center z-10 rounded-[inherit]`}
+            className={`${className} absolute inset-0 w-full h-full object-cover origin-center z-10 rounded-[inherit] transition-opacity duration-300 ${
+              isLoaded ? "opacity-100" : "opacity-0"
+            }`}
             whileHover={!isEditing ? {
               scale: layout.scale * 1.04,
               filter: "brightness(1.02) contrast(1.02)",
@@ -269,92 +382,79 @@ function EditableImageContainer({
               stiffness: 150,
               damping: 18,
             }}
-            referrerPolicy="no-referrer"
           />
+        )}
+        {/* Smooth placeholder that fades out gracefully */}
+        <div
+          className={`absolute inset-0 bg-[#111113] z-20 pointer-events-none transition-opacity duration-300 ${
+            isLoaded ? "opacity-0" : "opacity-100"
+          }`}
+        />
 
-          {/* Precision Layout Controls Overlay */}
-          {isEditing && (
-            <div className="absolute inset-x-0 bottom-0 bg-black/90 backdrop-blur-md p-2.5 z-40 border-t border-white/10 flex flex-col gap-1.5 select-none text-white rounded-b-[inherit]">
-              <div className="flex justify-between items-center text-[10px] uppercase tracking-wider font-bold text-zinc-400">
-                <span>Adjusting {imgKey === "img3" ? "Hero View" : imgKey === "img1" ? "Detail 1" : "Detail 2"}</span>
-                <span className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px]">
-                  x: {layout.x}px | y: {layout.y}px | s: {layout.scale.toFixed(2)}x
-                </span>
+        {/* Precision Layout Controls Overlay */}
+        {isEditing && (
+          <div className="absolute inset-x-0 bottom-0 bg-black/90 backdrop-blur-md p-2.5 z-40 border-t border-white/10 flex flex-col gap-1.5 select-none text-white rounded-b-[inherit]">
+            <div className="flex justify-between items-center text-[10px] uppercase tracking-wider font-bold text-zinc-400">
+              <span>Adjusting {imgKey === "img3" ? "Hero View" : imgKey === "img1" ? "Detail 1" : "Detail 2"}</span>
+              <span className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px]">
+                x: {layout.x}px | y: {layout.y}px | s: {layout.scale.toFixed(2)}x
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-[9px] font-mono">
+              {/* X Slider */}
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[#D7E2EA]/60">Shift X:</span>
+                <input
+                  type="range"
+                  min="-150"
+                  max="150"
+                  value={layout.x}
+                  onChange={(e) => handleSliderChange("x", parseInt(e.target.value))}
+                  className="w-full accent-[#B600A8] h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                />
               </div>
-              <div className="grid grid-cols-3 gap-2 text-[9px] font-mono">
-                {/* X Slider */}
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[#D7E2EA]/60">Shift X:</span>
-                  <input
-                    type="range"
-                    min="-150"
-                    max="150"
-                    value={layout.x}
-                    onChange={(e) => handleSliderChange("x", parseInt(e.target.value))}
-                    className="w-full accent-[#B600A8] h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
-                  />
-                </div>
-                {/* Y Slider */}
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[#D7E2EA]/60">Shift Y:</span>
-                  <input
-                    type="range"
-                    min="-150"
-                    max="150"
-                    value={layout.y}
-                    onChange={(e) => handleSliderChange("y", parseInt(e.target.value))}
-                    className="w-full accent-[#B600A8] h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
-                  />
-                </div>
-                {/* Scale Slider */}
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[#D7E2EA]/60">Scale:</span>
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="2.5"
-                    step="0.05"
-                    value={layout.scale}
-                    onChange={(e) => handleSliderChange("scale", parseFloat(e.target.value))}
-                    className="w-full accent-[#B600A8] h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
-                  />
-                </div>
+              {/* Y Slider */}
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[#D7E2EA]/60">Shift Y:</span>
+                <input
+                  type="range"
+                  min="-150"
+                  max="150"
+                  value={layout.y}
+                  onChange={(e) => handleSliderChange("y", parseInt(e.target.value))}
+                  className="w-full accent-[#B600A8] h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+              {/* Scale Slider */}
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[#D7E2EA]/60">Scale:</span>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.5"
+                  step="0.05"
+                  value={layout.scale}
+                  onChange={(e) => handleSliderChange("scale", parseFloat(e.target.value))}
+                  className="w-full accent-[#B600A8] h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                />
               </div>
             </div>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <ImageWithLoader
-        src={src}
-        alt={alt}
-        className={`${className} w-full h-full object-cover rounded-[inherit]`}
-        whileHover={{
-          scale: 1.05,
-          filter: "brightness(1.04) contrast(1.01)",
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 150,
-          damping: 18,
-        }}
-        referrerPolicy="no-referrer"
-      />
+          </div>
+        )}
+      </div>
     );
   };
 
-  if (parallaxOffset && !isSolaris) {
+  if (parallaxOffset) {
     return (
-      <motion.div style={{ x: parallaxOffset, ...clipStyle }} className="w-[calc(100%+24px)] h-full -ml-[12px] relative rounded-[inherit]">
+      <motion.div style={{ x: parallaxOffset, ...clipStyle }} className={`w-[calc(100%+24px)] h-full -ml-[12px] relative rounded-[inherit] ${containerClass}`}>
         {renderInner()}
       </motion.div>
     );
   }
 
   return (
-    <div className={`w-full h-full relative overflow-hidden rounded-[inherit] ${finalContainerClass}`} style={clipStyle}>
+    <div className={`w-full h-full relative overflow-hidden rounded-[inherit] ${containerClass || "w-full h-full"}`} style={clipStyle}>
       {renderInner()}
     </div>
   );
@@ -427,11 +527,19 @@ function ProjectCard({ project, index }: ProjectCardProps) {
     mouseX.set(0.5); // smoothly return to center on cursor exit
   };
 
-  // Visual Edit Mode configuration enabled for all projects
+  // Admin authentication check: Only authenticated admins can see or use layout controls
+  const { isAdmin, adminToken } = useAdminAuth();
   const isSolaris = true;
   
   const [isEditing, setIsEditing] = useState(false);
   const storageKey = `project_layouts_v2_${project.num}`;
+
+  // Automatically exit edit mode if admin logs out
+  useEffect(() => {
+    if (!isAdmin && isEditing) {
+      setIsEditing(false);
+    }
+  }, [isAdmin, isEditing]);
 
   const [layouts, setLayouts] = useState(() => {
     try {
@@ -455,9 +563,23 @@ function ProjectCard({ project, index }: ProjectCardProps) {
     };
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(layouts));
+      // Enforce backend sync with admin credentials
+      if (adminToken) {
+        await fetch("/api/projects/layout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": adminToken,
+          },
+          body: JSON.stringify({
+            projectNum: project.num,
+            layouts,
+          }),
+        });
+      }
     } catch (e) {
       console.error("Error saving layouts", e);
     }
@@ -537,7 +659,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
 
         {/* Action Controls and Live Project Button */}
         <div className="flex items-center gap-3">
-          {isSolaris && (
+          {isAdmin && (
             <div className="flex items-center gap-1.5 sm:gap-2 mr-1 sm:mr-2">
               {isEditing ? (
                 <>
@@ -563,9 +685,11 @@ function ProjectCard({ project, index }: ProjectCardProps) {
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-2.5 sm:px-3 py-1 text-[10px] sm:text-xs font-bold rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-200 border border-white/10 cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 text-[10px] sm:text-xs font-bold rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-200 border border-white/10 cursor-pointer"
+                  title="Edit Layout (Admin Only)"
                 >
-                  EDIT LAYOUT
+                  <Sliders className="w-3 h-3 text-[#B600A8]" />
+                  <span>EDIT LAYOUT</span>
                 </button>
               )}
             </div>
@@ -591,6 +715,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
               isEditing={isEditing}
               layouts={layouts}
               setLayouts={setLayouts}
+              priority={index === 0}
               className="w-full h-full object-cover filter brightness-95"
               containerClass="w-full h-full"
             />
@@ -611,6 +736,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
               isEditing={isEditing}
               layouts={layouts}
               setLayouts={setLayouts}
+              priority={index === 0}
               className="w-full h-full object-cover filter brightness-95"
               containerClass="w-full h-full"
             />
@@ -631,6 +757,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
               isEditing={isEditing}
               layouts={layouts}
               setLayouts={setLayouts}
+              priority={index === 0}
               className="w-full h-full object-cover filter brightness-95"
               containerClass="w-full h-full"
             />
@@ -656,6 +783,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
                 isEditing={isEditing}
                 layouts={layouts}
                 setLayouts={setLayouts}
+                priority={index === 0}
                 parallaxOffset={xOffsetLeft}
                 className="w-full h-full object-cover filter brightness-95 saturate-95"
                 containerClass="w-[calc(100%+24px)] h-full -ml-[12px]"
@@ -672,6 +800,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
                 isEditing={isEditing}
                 layouts={layouts}
                 setLayouts={setLayouts}
+                priority={index === 0}
                 parallaxOffset={xOffsetLeft}
                 className="w-full h-full object-cover filter brightness-95 saturate-95"
                 containerClass="w-[calc(100%+24px)] h-full -ml-[12px]"
@@ -689,6 +818,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
               isEditing={isEditing}
               layouts={layouts}
               setLayouts={setLayouts}
+              priority={index === 0}
               parallaxOffset={xOffsetRight}
               className="w-full h-full object-cover filter brightness-95 saturate-95"
               containerClass="w-[calc(100%+24px)] h-full -ml-[12px]"
@@ -700,5 +830,3 @@ function ProjectCard({ project, index }: ProjectCardProps) {
     </motion.div>
   );
 }
-
-export default ProjectsSection;

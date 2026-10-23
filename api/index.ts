@@ -2,7 +2,6 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
-import compression from "compression";
 import { fileURLToPath } from "url";
 import { initializeApp } from "firebase/app";
 import { getFirestore, initializeFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, getDoc, setDoc } from "firebase/firestore";
@@ -23,8 +22,15 @@ try {
 
 const app = express();
 
-app.use(compression());
 app.use(express.json());
+
+// Set aggressive HTTP cache headers on static assets and images so they are cached by the browser and not repeatedly downloaded
+app.use((req, res, next) => {
+  if (/\.(jpg|jpeg|png|webp|gif|svg|ico|avif|mp4|webm|woff2?)$/i.test(req.path)) {
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  }
+  next();
+});
 
 // In-memory fallback in case Firebase config is not fully available/loaded
 interface Submission {
@@ -52,6 +58,7 @@ let memoryVisits: Visit[] = [];
 
 let memoryProjects: any[] = [];
 let memoryCertificates: any[] = [];
+let memoryLayouts: Record<string, any> = {};
 
 // Initialize Firebase from generated config or robust fallback
 let firebaseApp: any = null;
@@ -171,6 +178,19 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
+function getCleanErrorMessage(err: any): string {
+  if (!err || !err.message) return "An unexpected error occurred.";
+  try {
+    const parsed = JSON.parse(err.message);
+    if (parsed && typeof parsed === "object" && "error" in parsed) {
+      return parsed.error;
+    }
+  } catch (e) {
+    // Not a JSON string
+  }
+  return err.message;
+}
+
 let randomSessionFallback: string | null = null;
 
 async function getAdminPassword(): Promise<string> {
@@ -257,7 +277,7 @@ app.post("/api/contact", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Contact submission failed:", err);
-    res.status(500).json({ error: "Failed to save submission.", details: err.message });
+    res.status(500).json({ error: "Failed to save submission.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -305,7 +325,7 @@ app.post("/api/visit", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Visitor logging failed:", err);
-    res.status(500).json({ error: "Failed to record visit.", details: err.message });
+    res.status(500).json({ error: "Failed to record visit.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -412,7 +432,7 @@ app.get("/api/dashboard/analytics", async (req, res) => {
     });
   } catch (err: any) {
     console.error("[API] Failed to retrieve analytics:", err);
-    res.status(500).json({ error: "Failed to load analytics data.", details: err.message });
+    res.status(500).json({ error: "Failed to load analytics data.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -448,7 +468,7 @@ app.get("/api/dashboard/submissions", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to get submissions:", err);
-    res.status(500).json({ error: "Failed to fetch submissions.", details: err.message });
+    res.status(500).json({ error: "Failed to fetch submissions.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -480,7 +500,7 @@ app.delete("/api/dashboard/submissions/:id", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to delete submission:", err);
-    res.status(500).json({ error: "Failed to delete submission.", details: err.message });
+    res.status(500).json({ error: "Failed to delete submission.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -515,7 +535,7 @@ app.post("/api/dashboard/change-password", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to change password:", err);
-    res.status(500).json({ error: "Failed to change password.", details: err.message });
+    res.status(500).json({ error: "Failed to change password.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -527,6 +547,24 @@ app.get("/api/dashboard/status", async (req, res) => {
   } catch (err: any) {
     console.error("[API] Failed to get dashboard status:", err);
     res.status(500).json({ error: "Failed to read system status." });
+  }
+});
+
+// GET & POST /api/auth/verify-admin - Verify if admin token/password is valid
+app.all("/api/auth/verify-admin", async (req, res) => {
+  try {
+    const password = req.headers["x-admin-password"] || req.body?.password || req.query?.password;
+    if (!password || typeof password !== "string") {
+      return res.status(401).json({ authenticated: false, error: "Password required" });
+    }
+    const activePassword = await getAdminPassword();
+    if (password === activePassword) {
+      return res.json({ authenticated: true });
+    }
+    return res.status(401).json({ authenticated: false, error: "Invalid admin password" });
+  } catch (err: any) {
+    console.error("[API] Failed to verify admin password:", err);
+    res.status(500).json({ authenticated: false, error: "Verification failed", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -561,7 +599,7 @@ app.post("/api/dashboard/setup-password", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to setup initial password:", err);
-    res.status(500).json({ error: "Failed to save initial setup password.", details: err.message });
+    res.status(500).json({ error: "Failed to save initial setup password.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -613,7 +651,7 @@ app.post("/api/dashboard/submissions/:id/reply", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to reply:", err);
-    res.status(500).json({ error: "Failed to save reply.", details: err.message });
+    res.status(500).json({ error: "Failed to save reply.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -645,7 +683,7 @@ app.get("/api/projects", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to get projects:", err);
-    res.status(500).json({ error: "Failed to fetch projects.", details: err.message });
+    res.status(500).json({ error: "Failed to fetch projects.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -693,7 +731,7 @@ app.post("/api/projects", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to save project:", err);
-    res.status(500).json({ error: "Failed to save project.", details: err.message });
+    res.status(500).json({ error: "Failed to save project.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -720,7 +758,66 @@ app.delete("/api/projects/:id", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to delete project:", err);
-    res.status(500).json({ error: "Failed to delete project.", details: err.message });
+    res.status(500).json({ error: "Failed to delete project.", details: getCleanErrorMessage(err) });
+  }
+});
+
+// GET /api/projects/layout - Fetch saved layout adjustments for portfolio projects
+app.get("/api/projects/layout", async (req, res) => {
+  try {
+    if (db) {
+      try {
+        const layoutDoc = await getDoc(doc(db, "settings", "project_layouts"));
+        if (layoutDoc.exists()) {
+          const data = layoutDoc.data();
+          return res.json({ layouts: data.layouts || {} });
+        }
+      } catch (err) {
+        console.warn("[Firestore] Failed to read project layouts, falling back to memory:", err);
+      }
+    }
+    return res.json({ layouts: memoryLayouts });
+  } catch (err: any) {
+    console.error("[API] Failed to get layouts:", err);
+    res.status(500).json({ error: "Failed to get project layouts", details: getCleanErrorMessage(err) });
+  }
+});
+
+// POST /api/projects/layout - Save custom layout adjustments (Admin-only, STRICTLY protected on backend)
+app.post("/api/projects/layout", async (req, res) => {
+  try {
+    const password = req.headers["x-admin-password"] || req.query.password || req.body?.password;
+    const activePassword = await getAdminPassword();
+    
+    if (!password || password !== activePassword) {
+      return res.status(401).json({ error: "Unauthorized access. Administrator permissions are strictly required to modify or save project layouts." });
+    }
+
+    const { projectNum, layouts } = req.body;
+    if (!projectNum || !layouts) {
+      return res.status(400).json({ error: "projectNum and layouts are required fields." });
+    }
+
+    // Persist in memory store
+    memoryLayouts[projectNum] = layouts;
+
+    // Persist in Firestore if available
+    if (db) {
+      try {
+        await setDoc(doc(db, "settings", "project_layouts"), {
+          layouts: memoryLayouts,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (err) {
+        console.warn("[Firestore] Could not persist layouts to Firestore:", err);
+      }
+    }
+
+    console.log(`[API] Saved project layout for project #${projectNum} (Admin Authorized)`);
+    return res.json({ success: true, projectNum, layouts });
+  } catch (err: any) {
+    console.error("[API] Failed to save project layout:", err);
+    res.status(500).json({ error: "Failed to save project layout.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -752,7 +849,7 @@ app.get("/api/certificates", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to get certificates:", err);
-    res.status(500).json({ error: "Failed to fetch certificates.", details: err.message });
+    res.status(500).json({ error: "Failed to fetch certificates.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -799,7 +896,7 @@ app.post("/api/certificates", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to save certificate:", err);
-    res.status(500).json({ error: "Failed to save certificate.", details: err.message });
+    res.status(500).json({ error: "Failed to save certificate.", details: getCleanErrorMessage(err) });
   }
 });
 
@@ -826,7 +923,7 @@ app.delete("/api/certificates/:id", async (req, res) => {
     }
   } catch (err: any) {
     console.error("[API] Failed to delete certificate:", err);
-    res.status(500).json({ error: "Failed to delete certificate.", details: err.message });
+    res.status(500).json({ error: "Failed to delete certificate.", details: getCleanErrorMessage(err) });
   }
 });
 

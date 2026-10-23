@@ -2,18 +2,15 @@ import React from "react";
 import FadeIn from "./FadeIn";
 import AnimatedText from "./AnimatedText";
 import ContactButton from "./ContactButton";
+import LazyImage from "./LazyImage";
 import senafProfile from "../assets/images/regenerated_image_1783182542165.webp";
-import moonIcon from "../assets/images/moon_icon.webp";
-import shapeIcon from "../assets/images/shape_icon.webp";
-import legoIcon from "../assets/images/lego_icon.webp";
-import groupIcon from "../assets/images/group_icon.webp";
 import { motion } from "motion/react";
 
 interface AboutSectionProps {
   onContactClick: () => void;
 }
 
-const AboutSection = React.memo(function AboutSection({ onContactClick }: AboutSectionProps) {
+export default function AboutSection({ onContactClick }: AboutSectionProps) {
   const bioText = "I'm Senaf Wondimu, a professional developer and creator passionate about crafting high-quality digital solutions. I specialize in modern web design, full-stack web development, and Kotlin Android applications. With a strong foundation in scalable architecture and polished UI/UX principles, I build clean, high-performance products that bring creative visions to life.";
 
   return (
@@ -29,9 +26,10 @@ const AboutSection = React.memo(function AboutSection({ onContactClick }: AboutS
         className="absolute top-[2%] left-[2%] sm:top-[4%] sm:left-[2%] md:left-[4%] z-0 select-none pointer-events-none"
       >
         <img
-          src={moonIcon}
+          src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/moon_icon.11395d36.png"
           alt="Decorative Moon"
           loading="lazy"
+          decoding="async"
           className="w-[50px] sm:w-[80px] md:w-[120px] lg:w-[150px] xl:w-[180px] h-auto object-contain opacity-30 sm:opacity-50 md:opacity-70 xl:opacity-80"
         />
       </FadeIn>
@@ -45,9 +43,10 @@ const AboutSection = React.memo(function AboutSection({ onContactClick }: AboutS
         className="absolute bottom-[2%] left-[2%] sm:bottom-[4%] sm:left-[2%] md:left-[4%] z-0 select-none pointer-events-none"
       >
         <img
-          src={shapeIcon}
+          src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/p59_1.4659672e.png"
           alt="Decorative Shape"
           loading="lazy"
+          decoding="async"
           className="w-[40px] sm:w-[70px] md:w-[100px] lg:w-[120px] xl:w-[140px] h-auto object-contain opacity-30 sm:opacity-50 md:opacity-70 xl:opacity-80"
         />
       </FadeIn>
@@ -61,9 +60,10 @@ const AboutSection = React.memo(function AboutSection({ onContactClick }: AboutS
         className="absolute top-[2%] right-[2%] sm:top-[4%] sm:right-[2%] md:right-[4%] z-0 select-none pointer-events-none"
       >
         <img
-          src={legoIcon}
+          src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/lego_icon-1.703bb594.png"
           alt="Decorative Lego"
           loading="lazy"
+          decoding="async"
           className="w-[50px] sm:w-[80px] md:w-[120px] lg:w-[150px] xl:w-[180px] h-auto object-contain opacity-30 sm:opacity-50 md:opacity-70 xl:opacity-80"
         />
       </FadeIn>
@@ -77,9 +77,10 @@ const AboutSection = React.memo(function AboutSection({ onContactClick }: AboutS
         className="absolute bottom-[2%] right-[2%] sm:bottom-[4%] sm:right-[2%] md:right-[4%] z-0 select-none pointer-events-none"
       >
         <img
-          src={groupIcon}
+          src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/Group_134-1.2e04f3ce.png"
           alt="Decorative Composition"
           loading="lazy"
+          decoding="async"
           className="w-[50px] sm:w-[80px] md:w-[110px] lg:w-[145px] xl:w-[175px] h-auto object-contain opacity-30 sm:opacity-50 md:opacity-70 xl:opacity-80"
         />
       </FadeIn>
@@ -109,11 +110,10 @@ const AboutSection = React.memo(function AboutSection({ onContactClick }: AboutS
                 {/* Border effect overlay */}
                 <div className="absolute inset-0 border border-white/5 group-hover:border-white/20 transition-all duration-500 rounded-[22px] pointer-events-none z-10" />
 
-                {/* Profile Image */}
-                <img
+                {/* Profile Image with Lazy Loading */}
+                <LazyImage
                   src={senafProfile}
                   alt="Senaf Wondimmu"
-                  loading="lazy"
                   className="w-full h-full object-cover rounded-2xl filter brightness-95 group-hover:brightness-100 transition-all duration-500"
                   referrerPolicy="no-referrer"
                 />
@@ -139,6 +139,4 @@ const AboutSection = React.memo(function AboutSection({ onContactClick }: AboutS
       </div>
     </section>
   );
-});
-
-export default AboutSection;
+}

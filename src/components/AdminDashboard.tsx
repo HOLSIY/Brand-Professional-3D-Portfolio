@@ -205,9 +205,13 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
           setIsSystemSetup(false);
         }
       }
+      // Check if existing valid admin session exists
+      const existingToken = localStorage.getItem("admin_auth_token");
+      if (existingToken && active) {
+        verifyPassword(existingToken);
+      }
     };
     checkSystemStatus();
-    localStorage.removeItem("admin_password");
     return () => {
       active = false;
     };
@@ -271,10 +275,14 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
         setSubmissions(data.submissions || []);
         setIsAuthenticated(true);
         setPassword(pwdToVerify);
+        localStorage.setItem("admin_auth_token", pwdToVerify);
+        window.dispatchEvent(new Event("admin-auth-change"));
         // Load visitor analytics and projects
         fetchAnalytics(pwdToVerify);
         fetchProjects();
       } else {
+        localStorage.removeItem("admin_auth_token");
+        window.dispatchEvent(new Event("admin-auth-change"));
         setError(data.error || "Invalid administrator password.");
       }
     } catch (err) {
@@ -544,7 +552,9 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("admin_auth_token");
     localStorage.removeItem("admin_password");
+    window.dispatchEvent(new Event("admin-auth-change"));
     setIsAuthenticated(false);
     setPassword("");
     setSubmissions([]);
@@ -656,7 +666,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                   <div>
                     <h2 className="text-xl font-bold uppercase tracking-wider text-white">Secure Admin Setup</h2>
                     <p className="text-xs text-[#D7E2EA]/50 mt-1">
-                      Configure your secure administrator password. This password will be saved directly into Firestore.
+                      Configure your secure administrator password.
                     </p>
                   </div>
                 </div>
@@ -855,7 +865,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                   <p className="text-xs font-semibold text-[#D7E2EA]/40 uppercase tracking-wider">Active Database</p>
                   <h3 className="text-sm font-semibold text-green-400 mt-2 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    Firestore Online
+                    Database Connected
                   </h3>
                 </div>
                 <div className="p-3 rounded-xl bg-green-500/10 text-green-400">
@@ -1503,9 +1513,9 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                 <HelpCircle className="w-6 h-6 animate-pulse" />
               </div>
 
-              <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white">Password Recovery</h3>
+              <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white">Forgot Password</h3>
               
-              <div className="text-sm text-[#D7E2EA]/70 font-light mt-4 leading-relaxed">
+              <div className="text-sm text-[#D7E2EA]/70 font-light mt-4 space-y-4 leading-relaxed">
                 <p>
                   If you have forgotten your administrator password, please contact the system administrator or use the internal password management options if available.
                 </p>
@@ -1516,7 +1526,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                   onClick={() => setShowForgotPwd(false)}
                   className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-semibold rounded-full transition-all cursor-pointer"
                 >
-                  Got it
+                  Close
                 </button>
               </div>
             </motion.div>
@@ -1551,7 +1561,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
 
               <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white">Change Admin Password</h3>
               <p className="text-xs text-[#D7E2EA]/50 mt-1 leading-relaxed">
-                Configure a secure custom password that will persist inside your active Firestore Database.
+                Configure a secure custom password that will persist inside your active database.
               </p>
               
               {pwdChangeError && (
@@ -1642,7 +1652,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
 
       {/* FOOTER */}
       <div className="text-center text-xs text-[#D7E2EA]/30 mt-16 border-t border-white/5 pt-8">
-        <p>© 2026 Senaf Portfolio Platform. Built with Express.js & Google Cloud Firestore.</p>
+        <p>© 2026 Senaf Portfolio Platform. Built with Express.js & Persistent Storage.</p>
       </div>
     </div>
   );

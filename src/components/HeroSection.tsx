@@ -4,15 +4,15 @@ import Magnet from "./Magnet";
 import ContactButton from "./ContactButton";
 import FadeIn from "./FadeIn";
 import { Download } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 interface HeroSectionProps {
   onContactClick: () => void;
   onNavClick: (sectionId: string) => void;
 }
 
-const HeroSection = React.memo(function HeroSection({ onContactClick, onNavClick }: HeroSectionProps) {
-  const handleDownloadCV = async () => {
-    const { jsPDF } = await import("jspdf");
+export default function HeroSection({ onContactClick, onNavClick }: HeroSectionProps) {
+  const handleDownloadCV = () => {
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -301,6 +301,4 @@ const HeroSection = React.memo(function HeroSection({ onContactClick, onNavClick
       </div>
     </section>
   );
-});
-
-export default HeroSection;
+}

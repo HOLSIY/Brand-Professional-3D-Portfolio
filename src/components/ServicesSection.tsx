@@ -2,7 +2,7 @@ import React from "react";
 import FadeIn from "./FadeIn";
 import { Cpu, Layout, Smartphone, PenTool, CheckCircle2 } from "lucide-react";
 
-const ServicesSection = React.memo(function ServicesSection() {
+export default function ServicesSection() {
   const serviceItems = [
     {
       num: "01",
@@ -198,6 +198,4 @@ const ServicesSection = React.memo(function ServicesSection() {
       </div>
     </section>
   );
-});
-
-export default ServicesSection;
+}
